@@ -9,11 +9,3 @@ class Cita(Base):
     fecha_hora = Column(DateTime, nullable=False)
     motivo = Column(String(255), nullable=True)
     estado = Column(String(255))
-
-    # Llaves foráneas
-    id_paciente = Column(Integer, ForeignKey("paciente.id_paciente"), nullable=False)
-    id_doctor = Column(Integer, ForeignKey("doctor.id_doctor"), nullable=False)
-
-    # Relaciones
-    paciente = relationship("Paciente", back_populates="citas")
-    doctor = relationship("Doctor", back_populates="citas")
