@@ -2,7 +2,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 def configure_middleware(app):
     origins = [
-        "http://localhost:3000",  # frontend local
+        "http://localhost:3000",
+        "http://localhost:5173" # frontend local
         # Agrega aquí dominios de producción cuando subas el proyecto
     ]
 
