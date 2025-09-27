@@ -14,4 +14,4 @@ class User(Base):
 
     # Relaciones
     user_roles = relationship("UserRole", back_populates="user")
-    citas = relationship("Cita", back_populates="user")
+    credentials = relationship("Credentials", back_populates="user")

@@ -19,4 +19,6 @@ def create_tables():
     from app.modules.auth.models import User, Role, UserRole, Credentials
 
     print("Creando tablas...")
+    print(f"Tablas a crear: {list(Base.metadata.tables.keys())}")
     Base.metadata.create_all(bind=engine)
+    print("✅ Tablas creadas exitosamente")

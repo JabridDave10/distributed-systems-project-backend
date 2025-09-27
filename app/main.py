@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from app.core.middleware import configure_middleware
 from app.core.database import create_tables
 from app.modules.citas.routers import health, citas
+from app.modules.auth.routers import user_router
 
 app = FastAPI(title="Distributed Systems Project - Backend", version="0.1.0")
 
@@ -14,6 +15,7 @@ async def startup_event():
 
 app.include_router(health.router)
 app.include_router(citas.router)
+app.include_router(user_router.router)
 
 @app.get("/")
 def read_root():
@@ -22,6 +24,7 @@ def read_root():
         "endpoints": {
             "health": "/health/",
             "citas": "/citas/",
+            "users": "/users/",
             "test_connection": "/citas/test/connection"
         }
     }
