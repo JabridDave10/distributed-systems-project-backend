@@ -15,3 +15,5 @@ class User(Base):
     # Relaciones
     user_roles = relationship("UserRole", back_populates="user")
     credentials = relationship("Credentials", back_populates="user")
+    citas_como_paciente = relationship("Cita", foreign_keys="Cita.id_paciente", back_populates="paciente")
+    citas_como_doctor = relationship("Cita", foreign_keys="Cita.id_doctor", back_populates="doctor")

@@ -6,10 +6,12 @@ class Cita(Base):
     __tablename__ = "cita"
 
     id_cita = Column(Integer, primary_key=True, index=True)
-    id_user = Column(Integer, ForeignKey("user.id_user"), nullable=False)
+    id_paciente = Column(Integer, ForeignKey("user.id_user"), nullable=False)
+    id_doctor = Column(Integer, ForeignKey("user.id_user"), nullable=False)
     fecha_hora = Column(DateTime, nullable=False)
     motivo = Column(String(255), nullable=True)
-    estado = Column(String(255))
+    estado = Column(String(50), default="programada")
 
     # Relaciones
-    user = relationship("User", back_populates="citas")
+    paciente = relationship("User", foreign_keys=[id_paciente], back_populates="citas_como_paciente")
+    doctor = relationship("User", foreign_keys=[id_doctor], back_populates="citas_como_doctor")
