@@ -37,7 +37,7 @@ class AssistantAIService:
         }
         
         body = {
-            "model": "x-ai/grok-4-fast",
+            "model": "x-ai/grok-4-fast:free",
             "max_tokens": max_tokens,
             "messages": messages
         }
@@ -126,8 +126,7 @@ class AssistantAIService:
                 4. Urgencia del caso
                 5. Recomendaciones inmediatas
                 
-                IMPORTANTE: Esto es solo para orientación médica. 
-                Siempre recomienda consultar con un médico profesional."""
+                IMPORTANTE: Esto es solo para orientación médica."""
             },
             {
                 "role": "user",
