@@ -248,3 +248,77 @@ class AppointmentService:
 
         print(f"✅ APPOINTMENT_SERVICE: Appointment hard deleted successfully")
         return True
+
+    def get_today_appointments_count(self) -> int:
+        """
+        Get count of appointments for today
+
+        Returns:
+            int: Number of appointments today
+        """
+        today = date.today()
+        count = self.db.query(func.count(Appointment.id)).filter(
+            func.date(Appointment.appointment_date) == today,
+            Appointment.deleted_at.is_(None)
+        ).scalar()
+        print(f"📊 APPOINTMENT_SERVICE: Found {count} appointments for today")
+        return count or 0
+
+    def get_active_patients_count(self) -> int:
+        """
+        Get count of unique active patients (patients with at least one appointment)
+
+        Returns:
+            int: Number of active patients
+        """
+        count = self.db.query(func.count(func.distinct(Appointment.patient_id))).filter(
+            Appointment.deleted_at.is_(None)
+        ).scalar()
+        print(f"📊 APPOINTMENT_SERVICE: Found {count} active patients")
+        return count or 0
+
+    def get_pending_appointments_count(self) -> int:
+        """
+        Get count of pending/scheduled appointments
+
+        Returns:
+            int: Number of pending appointments
+        """
+        count = self.db.query(func.count(Appointment.id)).filter(
+            Appointment.status.in_(["scheduled", "confirmed", "pending"]),
+            Appointment.deleted_at.is_(None)
+        ).scalar()
+        print(f"📊 APPOINTMENT_SERVICE: Found {count} pending appointments")
+        return count or 0
+
+    def get_today_appointments_with_details(self) -> List[dict]:
+        """
+        Get today's appointments with patient and doctor details
+
+        Returns:
+            List[dict]: List of today's appointments with details
+        """
+        today = date.today()
+        appointments = self.db.query(Appointment).join(
+            User, Appointment.patient_id == User.id_user, isouter=False
+        ).filter(
+            func.date(Appointment.appointment_date) == today,
+            Appointment.deleted_at.is_(None)
+        ).all()
+
+        result = []
+        for appointment in appointments:
+            # Get patient info
+            patient = self.db.query(User).filter(User.id_user == appointment.patient_id).first()
+
+            result.append({
+                "id": appointment.id,
+                "patient_name": f"{patient.firstName} {patient.lastName}" if patient else "Paciente Desconocido",
+                "appointment_date": appointment.appointment_date.isoformat(),
+                "reason": appointment.reason or "Consulta General",
+                "status": appointment.status,
+                "duration": "30 min"  # Por defecto, se puede calcular o almacenar en el futuro
+            })
+
+        print(f"📊 APPOINTMENT_SERVICE: Found {len(result)} detailed appointments for today")
+        return result

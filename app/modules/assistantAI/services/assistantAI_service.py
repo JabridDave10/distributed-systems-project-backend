@@ -37,7 +37,7 @@ class AssistantAIService:
         }
         
         body = {
-            "model": "x-ai/grok-4-fast",
+            "model": "x-ai/grok-4-fast:free",
             "max_tokens": max_tokens,
             "messages": messages
         }
