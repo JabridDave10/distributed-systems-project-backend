@@ -7,7 +7,7 @@ load_dotenv()
 
 from app.core.middleware import configure_middleware
 from app.core.database import create_tables
-from app.modules.citas.routers import health, citas
+from app.modules.citas.routers import health, citas, citas_today
 from app.modules.auth.routers.user_router import router as user_router
 from app.modules.auth.routers.auth_router import router as auth_router
 from app.modules.register.routers.register_router import router as register_router
@@ -26,6 +26,8 @@ async def startup_event():
 app.include_router(health.router)
 app.include_router(citas.router)  # Main appointments router
 app.include_router(citas.legacy_router)  # Legacy compatibility router
+app.include_router(citas_today.router)  # Today appointments router
+app.include_router(citas_today.legacy_router)  # Today appointments legacy router
 app.include_router(user_router)
 app.include_router(auth_router)
 app.include_router(register_router)
