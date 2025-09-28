@@ -43,7 +43,7 @@ async def login(login_data: LoginRequest, response: Response, db: Session = Depe
         
         return LoginResponse(
             message="Login exitoso",
-            access_token="",  # No enviar el token en la respuesta
+            access_token=access_token,  # Enviar el token para pruebas
             token_type="bearer",
             user=UserInfo(**user_info)
         )

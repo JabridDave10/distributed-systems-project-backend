@@ -1,4 +1,10 @@
 from fastapi import FastAPI
+from dotenv import load_dotenv
+import os
+
+# Cargar variables de entorno desde .env
+load_dotenv()
+
 from app.core.middleware import configure_middleware
 from app.core.database import create_tables
 from app.modules.citas.routers import health, citas

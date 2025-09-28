@@ -17,11 +17,18 @@ def get_db():
 
 def verify_jwt_auth(request: Request, db: Session = Depends(get_db)):
     """
-    Dependencia para verificar JWT y obtener el usuario actual autenticado desde cookies HttpOnly
+    Dependencia para verificar JWT y obtener el usuario actual autenticado desde cookies HttpOnly o header Authorization
     """
     try:
-        # Obtener token desde cookie HttpOnly
+        # Obtener token desde cookie HttpOnly o header Authorization
         token = request.cookies.get("auth_token")
+        
+        # Si no hay token en cookies, intentar obtenerlo del header Authorization
+        if not token:
+            auth_header = request.headers.get("Authorization")
+            if auth_header and auth_header.startswith("Bearer "):
+                token = auth_header.split(" ")[1]
+        
         if not token:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
