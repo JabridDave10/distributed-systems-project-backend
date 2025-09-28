@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Request
 from sqlalchemy.orm import Session
 from typing import List
+from pydantic import ValidationError
 from app.modules.citas.schemas.cita import AppointmentOut, AppointmentCreate, AppointmentUpdate, CitaOut, CitaCreate
 from app.modules.citas.services.cita_service import AppointmentService
 from app.core.database import SessionLocal
@@ -135,8 +136,6 @@ def create_cita_legacy(cita: CitaCreate, db: Session = Depends(get_db)):
     Legacy endpoint - Create a new appointment (cita) in the database
     """
     try:
-        print("🚀 ENDPOINT: POST /citas/ - Creating new appointment (legacy)")
-        print(f"📋 Data received: {cita.dict()}")
 
         # Convert legacy format to new format
         appointment_data = AppointmentCreate(

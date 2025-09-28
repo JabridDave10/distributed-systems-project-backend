@@ -6,6 +6,7 @@ from app.modules.auth.routers.user_router import router as user_router
 from app.modules.auth.routers.auth_router import router as auth_router
 from app.modules.register.routers.register_router import router as register_router
 from app.modules.assistantAI.routers.assistantAI_router import router as assistantAI_router
+from app.modules.schedules.routers.schedule_router import router as schedule_router
 
 app = FastAPI(title="Distributed Systems Project - Backend", version="0.1.0")
 
@@ -23,6 +24,7 @@ app.include_router(user_router)
 app.include_router(auth_router)
 app.include_router(register_router)
 app.include_router(assistantAI_router)
+app.include_router(schedule_router)
 
 @app.get("/")
 def read_root():
@@ -36,6 +38,7 @@ def read_root():
             "auth": "/auth/",
             "register": "/register/",
             "assistantAI": "/assistantAI/",
+            "schedules": "/schedules/",
             "test_connection": "/citas/test/connection"
         }
     }

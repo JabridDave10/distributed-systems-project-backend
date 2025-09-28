@@ -21,6 +21,9 @@ def create_tables():
     from app.modules.auth.models.user_role import UserRole
     from app.modules.auth.models.credentials import Credentials
     from app.modules.citas.models.cita import Appointment
+    from app.modules.schedules.models.doctor_schedule import DoctorSchedule
+    from app.modules.schedules.models.doctor_availability_exception import DoctorAvailabilityException
+    from app.modules.schedules.models.doctor_settings import DoctorSettings
 
     print("Creando tablas...")
     print(f"Tablas a crear: {list(Base.metadata.tables.keys())}")

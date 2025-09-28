@@ -1,10 +1,11 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_
-from datetime import datetime
+from sqlalchemy import and_, or_, func
+from datetime import datetime, date
 from typing import List, Optional
 from app.modules.citas.models.cita import Appointment
 from app.modules.auth.models.user import User
 from app.modules.citas.schemas.cita import AppointmentCreate, AppointmentOut
+from app.modules.schedules.services.schedule_service import ScheduleService
 
 class AppointmentService:
     def __init__(self, db: Session):
@@ -58,7 +59,20 @@ class AppointmentService:
             print(f"❌ APPOINTMENT_SERVICE: User {appointment_data.patient_id} is not a patient")
             raise ValueError("The specified user is not a patient")
 
-        # Verificar que no hay conflicto de horarios para el doctor
+        # Verificar disponibilidad del doctor usando el ScheduleService
+        schedule_service = ScheduleService(self.db)
+
+        # Verificar que el slot esté disponible
+        is_available = schedule_service.is_slot_available(
+            doctor_id=appointment_data.doctor_id,
+            appointment_datetime=appointment_data.appointment_date
+        )
+
+        if not is_available:
+            print(f"❌ APPOINTMENT_SERVICE: Doctor is not available at {appointment_data.appointment_date}")
+            raise ValueError("El doctor no está disponible en esa fecha y hora. Por favor, consulte los horarios disponibles.")
+
+        # Verificar que no hay conflicto de horarios para el doctor (verificación adicional)
         doctor_conflict = self.db.query(Appointment).filter(
             Appointment.doctor_id == appointment_data.doctor_id,
             Appointment.appointment_date == appointment_data.appointment_date,

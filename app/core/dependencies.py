@@ -41,8 +41,8 @@ def verify_jwt_auth(request: Request, db: Session = Depends(get_db)):
                 detail="Usuario no encontrado"
             )
         
-        # Obtener información completa del usuario
-        user_info = user_service.verify_credentials(email, "dummy")  # Solo para obtener info
+        # Obtener información completa del usuario sin verificar contraseña
+        user_info = user_service.get_user_info_by_email(email)
         
         return user_info
         

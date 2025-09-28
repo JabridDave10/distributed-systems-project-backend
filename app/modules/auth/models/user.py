@@ -21,3 +21,8 @@ class User(Base):
     # Legacy relationships for backward compatibility
     citas_como_paciente = relationship("Appointment", foreign_keys="Appointment.patient_id", back_populates="patient")
     citas_como_doctor = relationship("Appointment", foreign_keys="Appointment.doctor_id", back_populates="doctor")
+
+    # Schedule relationships
+    schedules = relationship("DoctorSchedule", back_populates="doctor")
+    availability_exceptions = relationship("DoctorAvailabilityException", back_populates="doctor")
+    doctor_settings = relationship("DoctorSettings", back_populates="doctor", uselist=False)
