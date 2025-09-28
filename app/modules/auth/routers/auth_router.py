@@ -1,11 +1,11 @@
 """
 Router de autenticación con JWT
 """
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from sqlalchemy.orm import Session
 from datetime import timedelta
 
-from app.core.dependencies import get_db, get_current_user
+from app.core.dependencies import get_db, verify_jwt_auth
 from app.core.security import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.modules.auth.services.user_service import UserService
 from app.modules.auth.schemas.auth.login_dto import LoginRequest, LoginResponse, UserInfo
@@ -37,7 +37,7 @@ async def login(login_data: LoginRequest, response: Response, db: Session = Depe
             value=access_token,
             max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # Convertir minutos a segundos
             httponly=True,
-            secure=True,  # Solo HTTPS en producción
+            secure=False,  # Cambiado a False para desarrollo local
             samesite="lax"  # Protección CSRF
         )
         
@@ -62,7 +62,7 @@ async def login(login_data: LoginRequest, response: Response, db: Session = Depe
         )
 
 @router.get("/me", response_model=UserInfo)
-async def get_current_user_info(current_user: dict = Depends(get_current_user)):
+async def get_current_user_info(current_user: dict = Depends(verify_jwt_auth)):
     """
     Obtener información del usuario actual
     """
@@ -77,7 +77,7 @@ async def logout(response: Response):
     response.delete_cookie(
         key="auth_token",
         httponly=True,
-        secure=True,
+        secure=False,  # Cambiado a False para desarrollo local
         samesite="lax"
     )
     

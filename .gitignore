@@ -1,3 +1,13 @@
+<<<<<<< HEAD
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.pytest_cache/
+.coverage
+=======
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -158,3 +168,4 @@ logs/
 # Temporary files
 tmp/
 temp/
+>>>>>>> a97023020be09061b2e42afb9970897980a2bdd2

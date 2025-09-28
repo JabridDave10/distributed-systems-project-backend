@@ -8,9 +8,9 @@ from passlib.context import CryptContext
 from fastapi import HTTPException, status
 import os
 
-SECRET_KEY = os.getenv("SECRET_KEY", "yOI8rTeqkeObDG5V1p2X0xGHTNeA5mwedek_HrIOtww")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
 # Contexto para hashing de contraseñas
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=12)

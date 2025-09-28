@@ -15,9 +15,9 @@ def get_db():
     finally:
         db.close()
 
-def get_current_user(request: Request, db: Session = Depends(get_db)):
+def verify_jwt_auth(request: Request, db: Session = Depends(get_db)):
     """
-    Dependencia para obtener el usuario actual autenticado desde cookies HttpOnly
+    Dependencia para verificar JWT y obtener el usuario actual autenticado desde cookies HttpOnly
     """
     try:
         # Obtener token desde cookie HttpOnly
