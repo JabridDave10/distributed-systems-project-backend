@@ -20,6 +20,7 @@ def create_tables():
     from app.modules.auth.models.role import Role
     from app.modules.auth.models.user_role import UserRole
     from app.modules.auth.models.credentials import Credentials
+    from app.modules.citas.models.cita import Appointment
 
     print("Creando tablas...")
     print(f"Tablas a crear: {list(Base.metadata.tables.keys())}")

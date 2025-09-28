@@ -1,11 +1,12 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from datetime import datetime
 from app.modules.auth.models.user import User
 from app.modules.auth.models.credentials import Credentials
 from app.modules.auth.models.user_role import UserRole
 from app.modules.auth.schemas.user.user_response_dto import UserResponseDto
 from app.core.security import get_password_hash, verify_password
-from typing import List
+from typing import List, Optional
 
 class UserService:
     def __init__(self, db: Session):
@@ -106,3 +107,63 @@ class UserService:
             "id_role": user_role.id_role if user_role else 1,
             "id_status": user.id_status
         }
+
+    def get_patients(self, search: Optional[str] = None) -> List[UserResponseDto]:
+        """
+        Obtener solo pacientes (id_role = 1) con búsqueda opcional
+
+        Args:
+            search (str, optional): Término de búsqueda para nombre, apellido o identificación
+
+        Returns:
+            List[UserResponseDto]: Lista de pacientes que coinciden con la búsqueda
+        """
+        print(f"🔍 USER_SERVICE: Obteniendo pacientes con búsqueda: '{search}'")
+
+        # Query base: obtener usuarios que son pacientes (id_role = 1) y están activos
+        query = self.db.query(User).join(UserRole).filter(
+            UserRole.id_role == 1,  # Solo pacientes
+            User.id_status == True   # Solo usuarios activos
+        )
+
+        # Aplicar filtro de búsqueda si se proporciona
+        if search and search.strip():
+            search_term = f"%{search.strip().lower()}%"
+            query = query.filter(
+                or_(
+                    User.firstName.ilike(search_term),
+                    User.lastName.ilike(search_term),
+                    User.identification.ilike(search_term),
+                    (User.firstName + ' ' + User.lastName).ilike(search_term)
+                )
+            )
+            print(f"🔍 USER_SERVICE: Aplicando filtro de búsqueda: {search_term}")
+
+        # Ejecutar query
+        users = query.all()
+        print(f"✅ USER_SERVICE: Encontrados {len(users)} pacientes")
+
+        # Convertir a DTOs
+        result = []
+        for user in users:
+            # Obtener credenciales del usuario
+            credentials = self.db.query(Credentials).filter(Credentials.id_user == user.id_user).first()
+
+            # Obtener el rol del usuario (ya sabemos que es 1, pero por consistencia)
+            user_role = self.db.query(UserRole).filter(UserRole.id_user == user.id_user).first()
+
+            result.append(UserResponseDto(
+                id_user=user.id_user,
+                firstName=user.firstName,
+                lastName=user.lastName,
+                identification=user.identification,
+                phone=user.phone or "",
+                email=credentials.email if credentials else "",
+                id_status=user.id_status,
+                id_role=user_role.id_role if user_role else 1,
+                createdAt=datetime.now().isoformat(),
+                updatedAt=datetime.now().isoformat()
+            ))
+
+        print(f"✅ USER_SERVICE: Retornando {len(result)} pacientes procesados")
+        return result

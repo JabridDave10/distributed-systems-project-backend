@@ -15,3 +15,9 @@ class User(Base):
     # Relaciones
     user_roles = relationship("UserRole", back_populates="user")
     credentials = relationship("Credentials", back_populates="user")
+    appointments_as_patient = relationship("Appointment", foreign_keys="Appointment.patient_id", back_populates="patient")
+    appointments_as_doctor = relationship("Appointment", foreign_keys="Appointment.doctor_id", back_populates="doctor")
+
+    # Legacy relationships for backward compatibility
+    citas_como_paciente = relationship("Appointment", foreign_keys="Appointment.patient_id", back_populates="patient")
+    citas_como_doctor = relationship("Appointment", foreign_keys="Appointment.doctor_id", back_populates="doctor")

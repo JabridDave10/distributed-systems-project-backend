@@ -3,11 +3,13 @@ from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 from app.modules.auth.services.user_service import UserService
 from app.modules.auth.schemas.user.user_response_dto import UserResponseDto
+from app.modules.register.services.register_service import RegisterService
+from app.modules.register.schemas.create_user_dto import CreateUserDto
 from typing import List
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(tags=["users"])
 
-@router.get("/test")
+@router.get("/users/test")
 def test_endpoint():
     """Endpoint de prueba"""
     print("🧪 ENDPOINT DE PRUEBA EJECUTÁNDOSE")
@@ -22,7 +24,7 @@ def get_db():
         db.close()
 
 
-@router.get("/{user_id}", response_model=UserResponseDto)
+@router.get("/users/{user_id}", response_model=UserResponseDto)
 def get_user(user_id: int, db: Session = Depends(get_db)):
     """
     Obtener un usuario por ID
@@ -42,7 +44,7 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
             detail="Error interno del servidor"
         )
 
-@router.get("/", response_model=List[UserResponseDto])
+@router.get("/users/", response_model=List[UserResponseDto])
 def get_all_users(db: Session = Depends(get_db)):
     """
     Obtener todos los usuarios
@@ -51,6 +53,51 @@ def get_all_users(db: Session = Depends(get_db)):
         user_service = UserService(db)
         users = user_service.get_all_users()
         return users
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error interno del servidor"
+        )
+
+@router.get("/patients/", response_model=List[UserResponseDto])
+def get_patients(search: str = None, db: Session = Depends(get_db)):
+    """
+    Obtener solo pacientes con búsqueda opcional
+
+    Args:
+        search (str, optional): Término de búsqueda para nombre, apellido o identificación
+    """
+    try:
+        print(f"🚀 ENDPOINT: /patients/ ejecutándose con search='{search}'")
+        user_service = UserService(db)
+        patients = user_service.get_patients(search)
+        print(f"✅ ENDPOINT: Retornando {len(patients)} pacientes")
+        return patients
+    except Exception as e:
+        print(f"❌ ENDPOINT: Error en /patients/: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error interno del servidor"
+        )
+
+@router.post("/users/register", status_code=status.HTTP_201_CREATED)
+def create_user(data: CreateUserDto, db: Session = Depends(get_db)):
+    """
+    Crear un nuevo usuario
+    """
+    print("🚀 ENDPOINT EJECUTÁNDOSE - /users/register")
+    print(f"🔍 Datos recibidos: {data}")
+    print(f"🔍 Tipo: {type(data)}")
+    print(f"🔍 Diccionario: {data.dict()}")
+    try:
+        register_service = RegisterService(db)
+        new_user = register_service.create_user(data)
+        return new_user
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
