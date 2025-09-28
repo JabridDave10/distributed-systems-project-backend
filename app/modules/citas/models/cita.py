@@ -1,17 +1,20 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 from app.core.database import Base
 
-class Cita(Base):
-    __tablename__ = "cita"
+class Appointment(Base):
+    __tablename__ = "appointment"
 
-    id_cita = Column(Integer, primary_key=True, index=True)
-    id_paciente = Column(Integer, ForeignKey("user.id_user"), nullable=False)
-    id_doctor = Column(Integer, ForeignKey("user.id_user"), nullable=False)
-    fecha_hora = Column(DateTime, nullable=False)
-    motivo = Column(String(255), nullable=True)
-    estado = Column(String(50), default="programada")
+    id = Column(Integer, primary_key=True, index=True)
+    patient_id = Column(Integer, ForeignKey("user.id_user"), nullable=False)
+    doctor_id = Column(Integer, ForeignKey("user.id_user"), nullable=False)
+    appointment_date = Column(DateTime, nullable=False)
+    reason = Column(String(255), nullable=True)
+    status = Column(String(50), default="scheduled")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
-    # Relaciones
-    paciente = relationship("User", foreign_keys=[id_paciente], back_populates="citas_como_paciente")
-    doctor = relationship("User", foreign_keys=[id_doctor], back_populates="citas_como_doctor")
+    # Relationships
+    patient = relationship("User", foreign_keys=[patient_id], back_populates="appointments_as_patient")
+    doctor = relationship("User", foreign_keys=[doctor_id], back_populates="appointments_as_doctor")

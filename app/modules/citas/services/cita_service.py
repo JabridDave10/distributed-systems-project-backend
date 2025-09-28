@@ -2,196 +2,235 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 from datetime import datetime
 from typing import List, Optional
-from app.modules.citas.models.cita import Cita
+from app.modules.citas.models.cita import Appointment
 from app.modules.auth.models.user import User
-from app.modules.citas.schemas.cita import CitaCreate, CitaOut
+from app.modules.citas.schemas.cita import AppointmentCreate, AppointmentOut
 
-class CitaService:
+class AppointmentService:
     def __init__(self, db: Session):
         self.db = db
 
-    def create_cita(self, cita_data: CitaCreate) -> Cita:
+    def create_appointment(self, appointment_data: AppointmentCreate) -> Appointment:
         """
-        Crear una nueva cita en la base de datos
+        Create a new appointment in the database
 
         Args:
-            cita_data (CitaCreate): Datos de la cita a crear
+            appointment_data (AppointmentCreate): Appointment data to create
 
         Returns:
-            Cita: Cita creada
+            Appointment: Created appointment
 
         Raises:
-            ValueError: Si el paciente o doctor no existen o no son válidos
+            ValueError: If patient or doctor don't exist or are not valid
         """
-        print(f"🚀 CITA_SERVICE: Creando nueva cita")
-        print(f"📋 Datos: doctor={cita_data.id_doctor}, paciente={cita_data.id_paciente}, fecha={cita_data.fecha_hora}")
+        print(f"🚀 APPOINTMENT_SERVICE: Creating new appointment")
+        print(f"📋 Data: doctor={appointment_data.doctor_id}, patient={appointment_data.patient_id}, date={appointment_data.appointment_date}")
 
         # Verificar que el doctor existe y es realmente un doctor (id_role = 2)
         doctor = self.db.query(User).join(User.user_roles).filter(
-            User.id_user == cita_data.id_doctor,
+            User.id_user == appointment_data.doctor_id,
             User.id_status == True
         ).first()
 
         if not doctor:
-            print(f"❌ CITA_SERVICE: Doctor con ID {cita_data.id_doctor} no encontrado")
-            raise ValueError("Doctor no encontrado")
+            print(f"❌ APPOINTMENT_SERVICE: Doctor with ID {appointment_data.doctor_id} not found")
+            raise ValueError("Doctor not found")
 
         # Verificar que el doctor tiene rol de doctor (id_role = 2)
         doctor_role = any(role.id_role == 2 for role in doctor.user_roles)
         if not doctor_role:
-            print(f"❌ CITA_SERVICE: Usuario {cita_data.id_doctor} no es doctor")
-            raise ValueError("El usuario especificado no es un doctor")
+            print(f"❌ APPOINTMENT_SERVICE: User {appointment_data.doctor_id} is not a doctor")
+            raise ValueError("The specified user is not a doctor")
 
         # Verificar que el paciente existe y es realmente un paciente (id_role = 1)
-        paciente = self.db.query(User).join(User.user_roles).filter(
-            User.id_user == cita_data.id_paciente,
+        patient = self.db.query(User).join(User.user_roles).filter(
+            User.id_user == appointment_data.patient_id,
             User.id_status == True
         ).first()
 
-        if not paciente:
-            print(f"❌ CITA_SERVICE: Paciente con ID {cita_data.id_paciente} no encontrado")
-            raise ValueError("Paciente no encontrado")
+        if not patient:
+            print(f"❌ APPOINTMENT_SERVICE: Patient with ID {appointment_data.patient_id} not found")
+            raise ValueError("Patient not found")
 
         # Verificar que el paciente tiene rol de paciente (id_role = 1)
-        paciente_role = any(role.id_role == 1 for role in paciente.user_roles)
-        if not paciente_role:
-            print(f"❌ CITA_SERVICE: Usuario {cita_data.id_paciente} no es paciente")
-            raise ValueError("El usuario especificado no es un paciente")
+        patient_role = any(role.id_role == 1 for role in patient.user_roles)
+        if not patient_role:
+            print(f"❌ APPOINTMENT_SERVICE: User {appointment_data.patient_id} is not a patient")
+            raise ValueError("The specified user is not a patient")
 
         # Verificar que no hay conflicto de horarios para el doctor
-        conflicto_doctor = self.db.query(Cita).filter(
-            Cita.id_doctor == cita_data.id_doctor,
-            Cita.fecha_hora == cita_data.fecha_hora,
-            Cita.estado.in_(["programada", "confirmada"])
+        doctor_conflict = self.db.query(Appointment).filter(
+            Appointment.doctor_id == appointment_data.doctor_id,
+            Appointment.appointment_date == appointment_data.appointment_date,
+            Appointment.status.in_(["scheduled", "confirmed"]),
+            Appointment.deleted_at.is_(None)
         ).first()
 
-        if conflicto_doctor:
-            print(f"❌ CITA_SERVICE: Conflicto de horario para doctor en {cita_data.fecha_hora}")
-            raise ValueError("El doctor ya tiene una cita programada en ese horario")
+        if doctor_conflict:
+            print(f"❌ APPOINTMENT_SERVICE: Schedule conflict for doctor at {appointment_data.appointment_date}")
+            raise ValueError("The doctor already has an appointment scheduled at that time")
 
         # Crear la cita
-        nueva_cita = Cita(
-            id_paciente=cita_data.id_paciente,
-            id_doctor=cita_data.id_doctor,
-            fecha_hora=cita_data.fecha_hora,
-            motivo=cita_data.motivo,
-            estado=cita_data.estado or "programada"
+        new_appointment = Appointment(
+            patient_id=appointment_data.patient_id,
+            doctor_id=appointment_data.doctor_id,
+            appointment_date=appointment_data.appointment_date,
+            reason=appointment_data.reason,
+            status=appointment_data.status or "scheduled"
         )
 
-        print(f"💾 CITA_SERVICE: Guardando cita en base de datos")
-        self.db.add(nueva_cita)
+        print(f"💾 APPOINTMENT_SERVICE: Saving appointment to database")
+        self.db.add(new_appointment)
         self.db.commit()
-        self.db.refresh(nueva_cita)
+        self.db.refresh(new_appointment)
 
-        print(f"✅ CITA_SERVICE: Cita creada exitosamente con ID {nueva_cita.id_cita}")
-        return nueva_cita
+        print(f"✅ APPOINTMENT_SERVICE: Appointment created successfully with ID {new_appointment.id}")
+        return new_appointment
 
-    def get_all_citas(self) -> List[Cita]:
+    def get_all_appointments(self) -> List[Appointment]:
         """
-        Obtener todas las citas
+        Get all appointments
 
         Returns:
-            List[Cita]: Lista de todas las citas
+            List[Appointment]: List of all appointments
         """
-        print(f"🔍 CITA_SERVICE: Obteniendo todas las citas")
-        citas = self.db.query(Cita).all()
-        print(f"✅ CITA_SERVICE: Encontradas {len(citas)} citas")
-        return citas
+        print(f"🔍 APPOINTMENT_SERVICE: Getting all appointments")
+        appointments = self.db.query(Appointment).filter(Appointment.deleted_at.is_(None)).all()
+        print(f"✅ APPOINTMENT_SERVICE: Found {len(appointments)} appointments")
+        return appointments
 
-    def get_cita_by_id(self, cita_id: int) -> Optional[Cita]:
+    def get_appointment_by_id(self, appointment_id: int) -> Optional[Appointment]:
         """
-        Obtener una cita por ID
+        Get an appointment by ID
 
         Args:
-            cita_id (int): ID de la cita
+            appointment_id (int): Appointment ID
 
         Returns:
-            Optional[Cita]: Cita encontrada o None
+            Optional[Appointment]: Found appointment or None
         """
-        print(f"🔍 CITA_SERVICE: Buscando cita con ID {cita_id}")
-        cita = self.db.query(Cita).filter(Cita.id_cita == cita_id).first()
+        print(f"🔍 APPOINTMENT_SERVICE: Searching appointment with ID {appointment_id}")
+        appointment = self.db.query(Appointment).filter(
+            Appointment.id == appointment_id,
+            Appointment.deleted_at.is_(None)
+        ).first()
 
-        if cita:
-            print(f"✅ CITA_SERVICE: Cita encontrada")
+        if appointment:
+            print(f"✅ APPOINTMENT_SERVICE: Appointment found")
         else:
-            print(f"❌ CITA_SERVICE: Cita no encontrada")
+            print(f"❌ APPOINTMENT_SERVICE: Appointment not found")
 
-        return cita
+        return appointment
 
-    def get_citas_by_doctor(self, doctor_id: int) -> List[Cita]:
+    def get_appointments_by_doctor(self, doctor_id: int) -> List[Appointment]:
         """
-        Obtener todas las citas de un doctor
+        Get all appointments for a doctor
 
         Args:
-            doctor_id (int): ID del doctor
+            doctor_id (int): Doctor ID
 
         Returns:
-            List[Cita]: Lista de citas del doctor
+            List[Appointment]: List of doctor's appointments
         """
-        print(f"🔍 CITA_SERVICE: Obteniendo citas del doctor {doctor_id}")
-        citas = self.db.query(Cita).filter(Cita.id_doctor == doctor_id).all()
-        print(f"✅ CITA_SERVICE: Encontradas {len(citas)} citas para el doctor")
-        return citas
+        print(f"🔍 APPOINTMENT_SERVICE: Getting appointments for doctor {doctor_id}")
+        appointments = self.db.query(Appointment).filter(
+            Appointment.doctor_id == doctor_id,
+            Appointment.deleted_at.is_(None)
+        ).all()
+        print(f"✅ APPOINTMENT_SERVICE: Found {len(appointments)} appointments for the doctor")
+        return appointments
 
-    def get_citas_by_paciente(self, paciente_id: int) -> List[Cita]:
+    def get_appointments_by_patient(self, patient_id: int) -> List[Appointment]:
         """
-        Obtener todas las citas de un paciente
+        Get all appointments for a patient
 
         Args:
-            paciente_id (int): ID del paciente
+            patient_id (int): Patient ID
 
         Returns:
-            List[Cita]: Lista de citas del paciente
+            List[Appointment]: List of patient's appointments
         """
-        print(f"🔍 CITA_SERVICE: Obteniendo citas del paciente {paciente_id}")
-        citas = self.db.query(Cita).filter(Cita.id_paciente == paciente_id).all()
-        print(f"✅ CITA_SERVICE: Encontradas {len(citas)} citas para el paciente")
-        return citas
+        print(f"🔍 APPOINTMENT_SERVICE: Getting appointments for patient {patient_id}")
+        appointments = self.db.query(Appointment).filter(
+            Appointment.patient_id == patient_id,
+            Appointment.deleted_at.is_(None)
+        ).all()
+        print(f"✅ APPOINTMENT_SERVICE: Found {len(appointments)} appointments for the patient")
+        return appointments
 
-    def update_cita_estado(self, cita_id: int, nuevo_estado: str) -> Optional[Cita]:
+    def update_appointment_status(self, appointment_id: int, new_status: str) -> Optional[Appointment]:
         """
-        Actualizar el estado de una cita
+        Update appointment status
 
         Args:
-            cita_id (int): ID de la cita
-            nuevo_estado (str): Nuevo estado
+            appointment_id (int): Appointment ID
+            new_status (str): New status
 
         Returns:
-            Optional[Cita]: Cita actualizada o None si no se encontró
+            Optional[Appointment]: Updated appointment or None if not found
         """
-        print(f"🔄 CITA_SERVICE: Actualizando estado de cita {cita_id} a '{nuevo_estado}'")
+        print(f"🔄 APPOINTMENT_SERVICE: Updating appointment {appointment_id} status to '{new_status}'")
 
-        cita = self.db.query(Cita).filter(Cita.id_cita == cita_id).first()
-        if not cita:
-            print(f"❌ CITA_SERVICE: Cita {cita_id} no encontrada")
+        appointment = self.db.query(Appointment).filter(
+            Appointment.id == appointment_id,
+            Appointment.deleted_at.is_(None)
+        ).first()
+        if not appointment:
+            print(f"❌ APPOINTMENT_SERVICE: Appointment {appointment_id} not found")
             return None
 
-        cita.estado = nuevo_estado
+        appointment.status = new_status
         self.db.commit()
-        self.db.refresh(cita)
+        self.db.refresh(appointment)
 
-        print(f"✅ CITA_SERVICE: Estado actualizado exitosamente")
-        return cita
+        print(f"✅ APPOINTMENT_SERVICE: Status updated successfully")
+        return appointment
 
-    def delete_cita(self, cita_id: int) -> bool:
+    def soft_delete_appointment(self, appointment_id: int) -> bool:
         """
-        Eliminar una cita
+        Soft delete an appointment (mark as deleted)
 
         Args:
-            cita_id (int): ID de la cita
+            appointment_id (int): Appointment ID
 
         Returns:
-            bool: True si se eliminó, False si no se encontró
+            bool: True if deleted, False if not found
         """
-        print(f"🗑️ CITA_SERVICE: Eliminando cita {cita_id}")
+        print(f"🗑️ APPOINTMENT_SERVICE: Soft deleting appointment {appointment_id}")
 
-        cita = self.db.query(Cita).filter(Cita.id_cita == cita_id).first()
-        if not cita:
-            print(f"❌ CITA_SERVICE: Cita {cita_id} no encontrada")
+        appointment = self.db.query(Appointment).filter(
+            Appointment.id == appointment_id,
+            Appointment.deleted_at.is_(None)
+        ).first()
+        if not appointment:
+            print(f"❌ APPOINTMENT_SERVICE: Appointment {appointment_id} not found")
             return False
 
-        self.db.delete(cita)
+        appointment.deleted_at = datetime.utcnow()
         self.db.commit()
 
-        print(f"✅ CITA_SERVICE: Cita eliminada exitosamente")
+        print(f"✅ APPOINTMENT_SERVICE: Appointment soft deleted successfully")
+        return True
+
+    def hard_delete_appointment(self, appointment_id: int) -> bool:
+        """
+        Hard delete an appointment (permanently remove)
+
+        Args:
+            appointment_id (int): Appointment ID
+
+        Returns:
+            bool: True if deleted, False if not found
+        """
+        print(f"🗑️ APPOINTMENT_SERVICE: Hard deleting appointment {appointment_id}")
+
+        appointment = self.db.query(Appointment).filter(Appointment.id == appointment_id).first()
+        if not appointment:
+            print(f"❌ APPOINTMENT_SERVICE: Appointment {appointment_id} not found")
+            return False
+
+        self.db.delete(appointment)
+        self.db.commit()
+
+        print(f"✅ APPOINTMENT_SERVICE: Appointment hard deleted successfully")
         return True

@@ -16,7 +16,8 @@ async def startup_event():
     create_tables()
 
 app.include_router(health.router)
-app.include_router(citas.router)
+app.include_router(citas.router)  # Main appointments router
+app.include_router(citas.legacy_router)  # Legacy compatibility router
 app.include_router(user_router)
 app.include_router(auth_router)
 app.include_router(register_router)
@@ -27,7 +28,8 @@ def read_root():
         "message": "Backend funcionando 🚀",
         "endpoints": {
             "health": "/health/",
-            "citas": "/citas/",
+            "appointments": "/appointments/",
+            "citas": "/citas/",  # Legacy endpoint
             "users": "/users/",
             "auth": "/auth/",
             "register": "/register/",
