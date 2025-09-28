@@ -16,7 +16,10 @@ Base = declarative_base()
 
 def create_tables():
     """Crear todas las tablas en la base de datos"""
-    from app.modules.auth.models import User, Role, UserRole, Credentials
+    from app.modules.auth.models.user import User
+    from app.modules.auth.models.role import Role
+    from app.modules.auth.models.user_role import UserRole
+    from app.modules.auth.models.credentials import Credentials
 
     print("Creando tablas...")
     print(f"Tablas a crear: {list(Base.metadata.tables.keys())}")
