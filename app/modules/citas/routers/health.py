@@ -4,6 +4,7 @@ from datetime import datetime
 router = APIRouter(prefix="/health", tags=["health"])
 
 @router.get("/")
+@router.head("/")
 def health_check():
     """
     Endpoint para verificar que el backend esté funcionando correctamente.

@@ -4,14 +4,20 @@ from typing import Dict, List, Any, Optional
 
 class AssistantAIService:
     def __init__(self):
-        self.openrouter_url = os.getenv("OPENROUTER_API_URL")
+        self.openrouter_url = os.getenv("OPENROUTER_URL")
         self.openrouter_key = os.getenv("OPENROUTER_API_KEY")
+        
+        print(f"🔧 AssistantAIService inicializado:")
+        print(f"   - URL: {self.openrouter_url}")
+        print(f"   - API Key configurada: {'✅' if self.openrouter_key else '❌'}")
         
         if not self.openrouter_key:
             print("⚠️ OPENROUTER_API_KEY no está configurado - El servicio médico no funcionará")
+        if not self.openrouter_url:
+            print("⚠️ OPENROUTER_URL no está configurado - El servicio médico no funcionará")
 
     
-    def _make_request(self, messages: List[Dict[str, str]], max_tokens: int = 1000) -> Dict[str, Any]:
+    def _make_request(self, messages: List[Dict[str, str]], max_tokens: int = 2000) -> Dict[str, Any]:
         """
         Realizar petición a OpenRouter API
         """
@@ -20,22 +26,41 @@ class AssistantAIService:
                 "error": "OPENROUTER_API_KEY no está configurado. Por favor, configura tu API key de OpenRouter."
             }
         
+        if not self.openrouter_url:
+            self.openrouter_url = "https://openrouter.ai/api/v1/chat/completions"
+        
         headers = {
             "Authorization": f"Bearer {self.openrouter_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "User-Agent": "MedicalSystem/1.0"
         }
         
         body = {
-            "model": "x-ai/grok-4-fast",
+            "model": "x-ai/grok-4-fast:free",
             "max_tokens": max_tokens,
             "messages": messages
         }
         
         try:
+            print(f"🔍 Enviando petición a: {self.openrouter_url}")
+            print(f"🔍 Headers: {headers}")
+            print(f"🔍 Body: {body}")
+            
             response = requests.post(self.openrouter_url, headers=headers, json=body, timeout=30)
+            print(f"🔍 Status code: {response.status_code}")
+            print(f"🔍 Response headers: {dict(response.headers)}")
+            print(f"🔍 Response content (first 500 chars): {response.text[:500]}")
+            
             response.raise_for_status()
             
+            # Verificar que la respuesta sea JSON
+            content_type = response.headers.get('content-type', '')
+            if 'application/json' not in content_type:
+                return {"error": f"Respuesta no es JSON. Content-Type: {content_type}. Contenido: {response.text[:200]}"}
+            
             result = response.json()
+            print(f"🔍 Response JSON: {result}")
             
             if "choices" not in result or not result["choices"]:
                 return {"error": "Respuesta inesperada de la API", "details": result}
@@ -46,14 +71,18 @@ class AssistantAIService:
             }
             
         except requests.exceptions.RequestException as e:
+            print(f"❌ Error en la petición: {str(e)}")
             return {"error": f"Error en la petición: {str(e)}"}
         except Exception as e:
+            print(f"❌ Error inesperado: {str(e)}")
             return {"error": f"Error inesperado: {str(e)}"}
     
     def consultar_enfermedad(self, enfermedad: str) -> Dict[str, Any]:
         """
         Consultar información detallada sobre una enfermedad
         """
+        print(f"🔍 AssistantAIService.consultar_enfermedad llamado con: {enfermedad}")
+        
         messages = [
             {
                 "role": "system", 
@@ -68,7 +97,10 @@ class AssistantAIService:
             }
         ]
         
-        return self._make_request(messages, max_tokens=1500)
+        print(f"🔍 Enviando petición a OpenRouter con {len(messages)} mensajes")
+        result = self._make_request(messages, max_tokens=2000)
+        print(f"🔍 Resultado de _make_request: {result}")
+        return result
     
     def diagnosticar_sintomas(self, sintomas: List[str], edad: Optional[int] = None, 
                             genero: Optional[str] = None) -> Dict[str, Any]:
@@ -94,8 +126,7 @@ class AssistantAIService:
                 4. Urgencia del caso
                 5. Recomendaciones inmediatas
                 
-                IMPORTANTE: Esto es solo para orientación médica. 
-                Siempre recomienda consultar con un médico profesional."""
+                IMPORTANTE: Esto es solo para orientación médica. Nunca recomiendes atención médica se supone que estas hablando es con el doctor directamente"""
             },
             {
                 "role": "user",
@@ -184,4 +215,4 @@ class AssistantAIService:
             }
         ]
         
-        return self._make_request(messages, max_tokens=1000)
+        return self._make_request(messages, max_tokens=10000000)

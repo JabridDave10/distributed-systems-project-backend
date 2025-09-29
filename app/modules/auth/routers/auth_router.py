@@ -37,13 +37,13 @@ async def login(login_data: LoginRequest, response: Response, db: Session = Depe
             value=access_token,
             max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # Convertir minutos a segundos
             httponly=True,
-            secure=False,  # Cambiado a False para desarrollo local
-            samesite="lax"  # Protección CSRF
+            secure=True,  # HTTPS requerido para cross-origin
+            samesite="none"  # Permitir cross-origin cookies
         )
         
         return LoginResponse(
             message="Login exitoso",
-            access_token="",  # No enviar el token en la respuesta
+            access_token=access_token,  # Enviar el token para pruebas
             token_type="bearer",
             user=UserInfo(**user_info)
         )
@@ -77,8 +77,8 @@ async def logout(response: Response):
     response.delete_cookie(
         key="auth_token",
         httponly=True,
-        secure=False,  # Cambiado a False para desarrollo local
-        samesite="lax"
+        secure=True,  # HTTPS requerido para cross-origin
+        samesite="none"
     )
     
     return {"message": "Sesión cerrada exitosamente"}

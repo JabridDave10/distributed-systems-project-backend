@@ -167,3 +167,40 @@ class UserService:
 
         print(f"✅ USER_SERVICE: Retornando {len(result)} pacientes procesados")
         return result
+
+    def get_user_info_by_email(self, email: str) -> dict:
+        """
+        Obtener información del usuario por email sin verificar contraseña
+
+        Args:
+            email (str): Email del usuario
+
+        Returns:
+            dict: Información del usuario
+        """
+        print(f"🔍 USER_SERVICE: Obteniendo información del usuario para {email}")
+
+        # Buscar credenciales por email
+        credentials = self.db.query(Credentials).filter(Credentials.email == email).first()
+        if not credentials:
+            print("❌ USER_SERVICE: Email no encontrado")
+            raise ValueError("Usuario no encontrado")
+
+        # Obtener información del usuario
+        user = self.db.query(User).filter(User.id_user == credentials.id_user).first()
+        if not user:
+            print("❌ USER_SERVICE: Usuario no encontrado")
+            raise ValueError("Usuario no encontrado")
+
+        # Obtener rol del usuario
+        user_role = self.db.query(UserRole).filter(UserRole.id_user == user.id_user).first()
+
+        print("✅ USER_SERVICE: Información del usuario obtenida correctamente")
+        return {
+            "id_user": user.id_user,
+            "firstName": user.firstName,
+            "lastName": user.lastName,
+            "email": credentials.email,
+            "id_role": user_role.id_role if user_role else 1,
+            "id_status": user.id_status
+        }

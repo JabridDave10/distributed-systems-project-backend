@@ -1,7 +1,9 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Request
 from sqlalchemy.orm import Session
 from typing import List
+from pydantic import ValidationError
 from app.modules.citas.schemas.cita import AppointmentOut, AppointmentCreate, AppointmentUpdate, CitaOut, CitaCreate
+from pydantic import BaseModel
 from app.modules.citas.services.cita_service import AppointmentService
 from app.core.database import SessionLocal
 from datetime import datetime
@@ -9,6 +11,19 @@ from datetime import datetime
 router = APIRouter(prefix="/appointments", tags=["appointments"])
 # Legacy router for backward compatibility
 legacy_router = APIRouter(prefix="/citas", tags=["citas"])
+
+class DashboardStats(BaseModel):
+    today_appointments: int
+    active_patients: int
+    pending_appointments: int
+
+class TodayAppointment(BaseModel):
+    id: int
+    patient_name: str
+    appointment_date: str
+    reason: str
+    status: str
+    duration: str
 
 def get_db():
     """Dependencia para obtener la sesión de base de datos"""
@@ -135,8 +150,6 @@ def create_cita_legacy(cita: CitaCreate, db: Session = Depends(get_db)):
     Legacy endpoint - Create a new appointment (cita) in the database
     """
     try:
-        print("🚀 ENDPOINT: POST /citas/ - Creating new appointment (legacy)")
-        print(f"📋 Data received: {cita.dict()}")
 
         # Convert legacy format to new format
         appointment_data = AppointmentCreate(
@@ -267,12 +280,69 @@ def test_connection():
         "server_time": datetime.now().isoformat(),
         "endpoints_available": [
             "GET /health/",
-            "GET /health/ping", 
+            "GET /health/ping",
             "GET /citas/",
             "GET /citas/{id}",
             "POST /citas/",
-            "GET /citas/test/connection"
+            "GET /citas/test/connection",
+            "GET /citas/stats/dashboard"
         ],
         "status": "ready"
     }
+
+@router.get("/stats/dashboard", response_model=DashboardStats)
+def get_dashboard_stats(db: Session = Depends(get_db)):
+    """
+    Get dashboard statistics for appointments
+    """
+    try:
+        print("🚀 ENDPOINT: /appointments/stats/dashboard - Getting dashboard statistics")
+        appointment_service = AppointmentService(db)
+
+        today_appointments = appointment_service.get_today_appointments_count()
+        active_patients = appointment_service.get_active_patients_count()
+        pending_appointments = appointment_service.get_pending_appointments_count()
+
+        stats = DashboardStats(
+            today_appointments=today_appointments,
+            active_patients=active_patients,
+            pending_appointments=pending_appointments
+        )
+
+        print(f"✅ ENDPOINT: Dashboard stats - Today: {today_appointments}, Active: {active_patients}, Pending: {pending_appointments}")
+        return stats
+    except Exception as e:
+        print(f"❌ ENDPOINT: Error getting dashboard stats: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error getting dashboard statistics"
+        )
+
+@legacy_router.get("/stats/dashboard", response_model=DashboardStats)
+def get_dashboard_stats_legacy(db: Session = Depends(get_db)):
+    """
+    Legacy endpoint - Get dashboard statistics for appointments
+    """
+    try:
+        print("🚀 ENDPOINT: /citas/stats/dashboard - Getting dashboard statistics (legacy)")
+        appointment_service = AppointmentService(db)
+
+        today_appointments = appointment_service.get_today_appointments_count()
+        active_patients = appointment_service.get_active_patients_count()
+        pending_appointments = appointment_service.get_pending_appointments_count()
+
+        stats = DashboardStats(
+            today_appointments=today_appointments,
+            active_patients=active_patients,
+            pending_appointments=pending_appointments
+        )
+
+        print(f"✅ ENDPOINT: Dashboard stats (legacy) - Today: {today_appointments}, Active: {active_patients}, Pending: {pending_appointments}")
+        return stats
+    except Exception as e:
+        print(f"❌ ENDPOINT: Error getting dashboard stats: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error getting dashboard statistics"
+        )
 
