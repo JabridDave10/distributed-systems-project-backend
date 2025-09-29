@@ -17,7 +17,7 @@ class AssistantAIService:
             print("⚠️ OPENROUTER_URL no está configurado - El servicio médico no funcionará")
 
     
-    def _make_request(self, messages: List[Dict[str, str]], max_tokens: int = 1000) -> Dict[str, Any]:
+    def _make_request(self, messages: List[Dict[str, str]], max_tokens: int = 2000) -> Dict[str, Any]:
         """
         Realizar petición a OpenRouter API
         """
@@ -27,13 +27,13 @@ class AssistantAIService:
             }
         
         if not self.openrouter_url:
-            return {
-                "error": "OPENROUTER_URL no está configurado. Por favor, configura la URL de OpenRouter."
-            }
+            self.openrouter_url = "https://openrouter.ai/api/v1/chat/completions"
         
         headers = {
             "Authorization": f"Bearer {self.openrouter_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "User-Agent": "MedicalSystem/1.0"
         }
         
         body = {
@@ -98,7 +98,7 @@ class AssistantAIService:
         ]
         
         print(f"🔍 Enviando petición a OpenRouter con {len(messages)} mensajes")
-        result = self._make_request(messages, max_tokens=1500)
+        result = self._make_request(messages, max_tokens=2000)
         print(f"🔍 Resultado de _make_request: {result}")
         return result
     
@@ -126,8 +126,7 @@ class AssistantAIService:
                 4. Urgencia del caso
                 5. Recomendaciones inmediatas
                 
-                IMPORTANTE: Esto es solo para orientación médica. 
-                Siempre recomienda consultar con un médico profesional."""
+                IMPORTANTE: Esto es solo para orientación médica. Nunca recomiendes atención médica se supone que estas hablando es con el doctor directamente"""
             },
             {
                 "role": "user",
@@ -216,4 +215,4 @@ class AssistantAIService:
             }
         ]
         
-        return self._make_request(messages, max_tokens=1000)
+        return self._make_request(messages, max_tokens=10000000)
