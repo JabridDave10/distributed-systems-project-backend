@@ -20,14 +20,21 @@ def verify_jwt_auth(request: Request, db: Session = Depends(get_db)):
     Dependencia para verificar JWT y obtener el usuario actual autenticado desde cookies HttpOnly o header Authorization
     """
     try:
+        # Debug logging
+        print(f"🔍 JWT AUTH: Checking authentication")
+        print(f"🔍 JWT AUTH: Available cookies: {dict(request.cookies)}")
+        print(f"🔍 JWT AUTH: Authorization header: {request.headers.get('Authorization', 'None')}")
+
         # Obtener token desde cookie HttpOnly o header Authorization
         token = request.cookies.get("auth_token")
-        
+        print(f"🔍 JWT AUTH: Token from cookies: {'Found' if token else 'Not found'}")
+
         # Si no hay token en cookies, intentar obtenerlo del header Authorization
         if not token:
             auth_header = request.headers.get("Authorization")
             if auth_header and auth_header.startswith("Bearer "):
                 token = auth_header.split(" ")[1]
+                print(f"🔍 JWT AUTH: Token from header: Found")
         
         if not token:
             raise HTTPException(
