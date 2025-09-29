@@ -35,6 +35,7 @@ app.include_router(assistantAI_router)
 app.include_router(schedule_router)
 
 @app.get("/")
+@app.head("/")
 def read_root():
     return {
         "message": "Backend funcionando 🚀",
