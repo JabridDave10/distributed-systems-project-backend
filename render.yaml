@@ -3,7 +3,7 @@ services:
     name: medcitas-backend
     env: python
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "python start.py"
+    startCommand: "echo 'PORT variable:' $PORT && uvicorn app.main:app --host 0.0.0.0 --port $PORT --log-level info"
     healthCheckPath: "/health/"
     envVars:
       - key: PYTHON_VERSION
