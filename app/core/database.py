@@ -28,6 +28,7 @@ def create_tables():
     from app.modules.schedules.models.doctor_schedule import DoctorSchedule
     from app.modules.schedules.models.doctor_availability_exception import DoctorAvailabilityException
     from app.modules.schedules.models.doctor_settings import DoctorSettings
+    from app.modules.medical_history.models.medical_history import MedicalHistory
 
     print("Creando tablas...")
     print(f"Tablas a crear: {list(Base.metadata.tables.keys())}")
