@@ -11,7 +11,7 @@ from app.modules.medical_history.schemas.medical_history_dto import (
 
 router = APIRouter(prefix="/medical-history", tags=["medical-history"])
 
-@router.post("/", response_model=MedicalHistoryResponse)
+@router.post("/create-medical-history", response_model=MedicalHistoryResponse)
 async def create_medical_history(
     medical_data: MedicalHistoryCreate,
     current_user: dict = Depends(verify_jwt_auth),
