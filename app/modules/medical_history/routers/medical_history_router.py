@@ -21,8 +21,13 @@ async def create_medical_history(
     Crear un nuevo registro de historial médico
     """
     try:
+        print(f"🔍 MEDICAL_HISTORY_ROUTER: Recibida petición para crear historial médico")
+        print(f"👤 Usuario actual: {current_user}")
+        print(f"📋 Datos recibidos: {medical_data}")
+        
         # Verificar que el usuario es un doctor
         if current_user.get("id_role") != 2:
+            print(f"❌ MEDICAL_HISTORY_ROUTER: Usuario no es doctor. Role: {current_user.get('id_role')}")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Solo los doctores pueden crear historiales médicos"
@@ -40,6 +45,28 @@ async def create_medical_history(
         )
     except Exception as e:
         print(f"❌ Error creando historial médico: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error interno del servidor"
+        )
+
+@router.get("/appointment/{appointment_id}/exists")
+async def check_medical_history_exists(
+    appointment_id: int,
+    current_user: dict = Depends(verify_jwt_auth),
+    db: Session = Depends(get_db)
+):
+    """
+    Verificar si una cita ya tiene historial médico
+    """
+    try:
+        service = MedicalHistoryService(db)
+        has_history = service.has_medical_history(appointment_id)
+        
+        return {"has_medical_history": has_history}
+        
+    except Exception as e:
+        print(f"❌ Error verificando existencia de historial médico: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error interno del servidor"

@@ -27,6 +27,8 @@ class MedicalHistoryService:
         if not appointment:
             print(f"❌ MEDICAL_HISTORY_SERVICE: Cita con ID {medical_data.id_appointment} no encontrada")
             raise ValueError("La cita no existe")
+        
+        print(f"🔍 MEDICAL_HISTORY_SERVICE: Cita encontrada - ID: {appointment.id}, Status actual: '{appointment.status}'")
 
         # Verificar que el doctor es el asignado a la cita
         if appointment.doctor_id != medical_data.id_doctor:
@@ -61,10 +63,27 @@ class MedicalHistoryService:
         )
 
         self.db.add(new_medical_history)
-        self.db.commit()
-        self.db.refresh(new_medical_history)
-
-        print(f"✅ MEDICAL_HISTORY_SERVICE: Historial médico creado con ID: {new_medical_history.id_medical_history}")
+        
+        # Marcar la cita como confirmada usando update directo
+        print(f"🔄 MEDICAL_HISTORY_SERVICE: Cambiando status de cita {appointment.id} de '{appointment.status}' a 'confirmed'")
+        
+        # Usar update directo para asegurar que se persista
+        self.db.query(Appointment).filter(Appointment.id == appointment.id).update({"status": "confirmed"})
+        
+        try:
+            self.db.commit()
+            self.db.refresh(new_medical_history)
+            
+            # Verificar que la actualización se hizo correctamente
+            updated_appointment = self.db.query(Appointment).filter(Appointment.id == appointment.id).first()
+            
+            print(f"✅ MEDICAL_HISTORY_SERVICE: Historial médico creado con ID: {new_medical_history.id_medical_history}")
+            print(f"✅ MEDICAL_HISTORY_SERVICE: Cita {appointment.id} marcada como confirmada (status: {updated_appointment.status})")
+        except Exception as e:
+            print(f"❌ MEDICAL_HISTORY_SERVICE: Error al hacer commit: {e}")
+            self.db.rollback()
+            raise e
+            
         return new_medical_history
 
     def get_medical_history_by_appointment(self, appointment_id: int) -> Optional[MedicalHistory]:
@@ -84,6 +103,23 @@ class MedicalHistoryService:
             MedicalHistory.id_patient == patient_id,
             MedicalHistory.deleted_at.is_(None)
         ).order_by(MedicalHistory.created_at.desc()).all()
+
+    def has_medical_history(self, appointment_id: int) -> bool:
+        """
+        Verificar si una cita ya tiene historial médico
+        
+        Args:
+            appointment_id (int): ID de la cita
+            
+        Returns:
+            bool: True si ya existe historial médico, False en caso contrario
+        """
+        existing_history = self.db.query(MedicalHistory).filter(
+            MedicalHistory.id_appointment == appointment_id,
+            MedicalHistory.deleted_at.is_(None)
+        ).first()
+        
+        return existing_history is not None
 
     def get_medical_histories_by_doctor(self, doctor_id: int) -> List[MedicalHistory]:
         """
