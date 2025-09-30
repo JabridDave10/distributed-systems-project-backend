@@ -26,3 +26,7 @@ class User(Base):
     schedules = relationship("DoctorSchedule", back_populates="doctor")
     availability_exceptions = relationship("DoctorAvailabilityException", back_populates="doctor")
     doctor_settings = relationship("DoctorSettings", back_populates="doctor", uselist=False)
+    
+    # Medical history relationships
+    medical_histories_as_patient = relationship("MedicalHistory", foreign_keys="MedicalHistory.id_patient", back_populates="patient")
+    medical_histories_as_doctor = relationship("MedicalHistory", foreign_keys="MedicalHistory.id_doctor", back_populates="doctor")

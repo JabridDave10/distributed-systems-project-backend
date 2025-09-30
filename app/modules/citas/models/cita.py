@@ -18,3 +18,4 @@ class Appointment(Base):
     # Relationships
     patient = relationship("User", foreign_keys=[patient_id], back_populates="appointments_as_patient")
     doctor = relationship("User", foreign_keys=[doctor_id], back_populates="appointments_as_doctor")
+    medical_history = relationship("MedicalHistory", back_populates="appointment")
